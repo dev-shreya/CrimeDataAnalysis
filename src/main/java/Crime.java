@@ -2,10 +2,13 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 
-public class Crime {
+import java.io.Serializable;
+
+public class Crime implements Serializable {
     public static void main(String args[]){
         SparkConf sparkConf = new SparkConf()
                 .setAppName("Crime Data analysis")
@@ -14,19 +17,36 @@ public class Crime {
         //
         JavaRDD<String> crimeDataRDD = sparkContext.textFile("CrimeData.csv");
 
-      //  crimeDataRDD.saveAsTextFile("output");
 
-        JavaPairRDD<String,String> crimePairRDD = crimeDataRDD.mapToPair(
-                new PairFunction<String, String, String>() {
+        JavaRDD<String> offenceRDD = crimeDataRDD.filter(
+                new Function<String, Boolean>() {
                     @Override
-                    public Tuple2<String, String> call(String s) throws Exception {
-                        String incident_id= s.split(",")[0];
-
-                        return new Tuple2(incident_id,s); //Key value Pair
+                    public Boolean call(String s) throws Exception {
+                        String[] tokens = s.split(",");
+                        int offenceID = new Integer(tokens[0]).intValue();
+                        if (offenceID >= 201000000 && offenceID <= 201340100) return true;
+                        else return false;
                     }
                 }
-        ).repartition(10);;
-        crimePairRDD.saveAsTextFile("output");
+        ).repartition(4);
+
+      offenceRDD.saveAsTextFile("output");
+
+
+//        JavaPairRDD<String,String> crimePairRDD = crimeDataRDD.mapToPair(
+//                new PairFunction<String, String, String>() {
+//                    @Override
+//                    public Tuple2<String, String> call(String s) throws Exception {
+//                        String incident_id= s.split(",")[0];
+//
+//                        return new Tuple2(incident_id,s); //Key value Pair
+//                    }
+//                }
+//        ).repartition(10);
+//
+//
+//
+//        crimePairRDD.saveAsTextFile("output");
 
 //        SparkConf conf = new SparkConf().setAppName("CrimeAnalysisDataset").setMaster("local");
 //        // create Spark Context
