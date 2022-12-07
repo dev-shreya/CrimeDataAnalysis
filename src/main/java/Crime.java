@@ -144,18 +144,39 @@ public class Crime implements Serializable {
                 }
         );
 
-        JavaPairRDD<Integer, String> MDSwapRDD = reducedRDD.mapToPair(new PairFunction<Tuple2<String, Integer>, Integer, String>() {
+        JavaPairRDD<Integer, String> MarylandSwapRDD = reducedRDD.mapToPair(new PairFunction<Tuple2<String, Integer>, Integer, String>() {
             @Override
             public Tuple2<Integer, String> call(Tuple2<String, Integer> item) throws Exception {
                 return item.swap();
             }
 
         });
-        List<Tuple2<Integer , String>> sortedMarylandListRDD = MDSwapRDD.sortByKey(false).take(5);
+        List<Tuple2<Integer , String>> sortedMarylandListRDD = MarylandSwapRDD.sortByKey(false).take(5);
 
 
         JavaPairRDD<Integer, String> MDSortedPairRDD = sparkContext.parallelizePairs(sortedMarylandListRDD).repartition(1);
-        MDSortedPairRDD.saveAsTextFile("Maryland_output");
+
+        JavaPairRDD<String, Integer> MDSwappedPairRDD = MDSortedPairRDD.mapToPair(new PairFunction<Tuple2<Integer, String>, String, Integer>() {
+            @Override
+            public Tuple2<String , Integer> call(Tuple2<Integer, String> item) throws Exception {
+                return item.swap();
+            }
+
+        });
+
+        JavaRDD<String> MarylandFinalRDD = MDSwappedPairRDD.map(
+                new Function<Tuple2<String, Integer>, String>() {
+                    @Override
+                    public String call(Tuple2<String, Integer> stringIntegerTuple2) throws Exception {
+                        String s = stringIntegerTuple2._1 + "," +stringIntegerTuple2._2;
+                        return s;
+                    }
+                }
+        );
+
+
+
+        MarylandFinalRDD.saveAsTextFile("Maryland_output");
 
 
     }
