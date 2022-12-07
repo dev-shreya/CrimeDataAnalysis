@@ -1,8 +1,13 @@
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.PairFunction;
+import scala.Tuple2;
+import org.apache.spark.api.java.function.Function2;
 import java.io.Serializable;
-
+import java.util.List;
 public class Crime implements Serializable {
     public static void main(String args[]){
         SparkConf sparkConf = new SparkConf()
@@ -12,9 +17,9 @@ public class Crime implements Serializable {
         //
 
 
-  // SanDiago Data analysis
-        JavaRDD<String> sandiegoRDD = sparkContext.textFile("SANDAG_Crime_Data1.csv");
-        JavaRDD<String> filteredRDD = sandiegoRDD.filter(
+//         SanDiago Data analysis
+        JavaRDD<String> sanDiegoRDD = sparkContext.textFile("SANDAG_Crime_Data1.csv");
+        JavaRDD<String> filteredSDRDD = sanDiegoRDD.filter(
                 new Function<String, Boolean>() {
                     @Override
                     public Boolean call(String s) throws Exception {
@@ -27,129 +32,131 @@ public class Crime implements Serializable {
                 }
         );
 
-//        JavaPairRDD<String,Tuple2<Float,Integer>> sddataRDD = filteredRDD.mapToPair(
-//                new PairFunction<String, String, Tuple2<Float, Integer>>() {
-//                    @Override
-//                    public Tuple2<String, Tuple2<Float, Integer>> call(String s) throws Exception {
-//                        String[] tokens = s.split(",");
-//                        String year= tokens[0];
-//                        Float crimerate = new Float(tokens[2]);
-//                        return new Tuple2(year, new Tuple2(crimerate,1));
-//                    }
-//                }
-//        ).repartition(1);
+        JavaPairRDD<String,Tuple2<Float,Integer>>  sanDiegoDataKVRDD = filteredSDRDD.mapToPair(
+                new PairFunction<String, String, Tuple2<Float, Integer>>() {
+                    @Override
+                    public Tuple2<String, Tuple2<Float, Integer>> call(String s) throws Exception {
+                        String[] tokens = s.split(",");
+                        String year= tokens[0];
+                        Float crimeRate = new Float(tokens[2]);
+
+                        return new Tuple2(year, new Tuple2(crimeRate,1));
+                    }
+                }
+        ).repartition(1);
 
 
-//        JavaPairRDD<String, Tuple2<Float,Integer>> resultRDD = sddataRDD.reduceByKey(
-//                new Function2<Tuple2<Float, Integer>, Tuple2<Float, Integer>, Tuple2<Float, Integer>>() {
-//                    @Override
-//                    public Tuple2<Float, Integer> call(Tuple2<Float, Integer> floatIntegerTuple2, Tuple2<Float, Integer> floatIntegerTuple22) throws Exception {
-//                        Float sum = floatIntegerTuple2._1 + floatIntegerTuple22._1;
-//                        Integer count = floatIntegerTuple2._2 + floatIntegerTuple22._2;
-//
-//                        return new Tuple2(sum, count);
-//                    }
-//                }
-//        );
+        JavaPairRDD<String, Tuple2<Float,Integer>> SanDiegoReduceKVRDD = sanDiegoDataKVRDD.reduceByKey(
+                new Function2<Tuple2<Float, Integer>, Tuple2<Float, Integer>, Tuple2<Float, Integer>>() {
+                    @Override
+                    public Tuple2<Float, Integer> call(Tuple2<Float, Integer> floatIntegerTuple2, Tuple2<Float, Integer> floatIntegerTuple22) throws Exception {
+                        Float sum = floatIntegerTuple2._1 + floatIntegerTuple22._1;
+                        Integer count = floatIntegerTuple2._2 + floatIntegerTuple22._2;
 
-//        JavaRDD<Tuple2<String,Float>> avgcrimeRDD =resultRDD.map(
-//                new Function<Tuple2<String, Tuple2<Float, Integer>>, Tuple2<String, Float>>() {
-//                    @Override
-//                    public Tuple2<String, Float> call(Tuple2<String, Tuple2<Float, Integer>> stringTuple2Tuple2) throws Exception {
-//                       String key =stringTuple2Tuple2._1;
-//                        Float avg =stringTuple2Tuple2._2._1 / stringTuple2Tuple2._2._2;
-//
-//                        return new Tuple2(key,avg);
-//                    }
-//                }
-//        );
+                        return new Tuple2(sum, count);
+                    }
+                }
+        );
 
-//        JavaRDD<Tuple2<String,Float>> sortedSDRDD = avgcrimeRDD.sortBy(
-//                new Function<Tuple2<String, Float>, Object>() {
-//
-//                    @Override
-//                    public Object call(Tuple2<String, Float> stringFloatTuple2) throws Exception {
-//
-//                        return null;
-//                    }
-//                }
-//        );
+        JavaRDD<Tuple2<String,Float>> sanDiegoAvgCrimeRDD =SanDiegoReduceKVRDD.map(
+                new Function<Tuple2<String, Tuple2<Float, Integer>>, Tuple2<String, Float>>() {
+                    @Override
+                    public Tuple2<String, Float> call(Tuple2<String, Tuple2<Float, Integer>> stringTuple2Tuple2) throws Exception {
+                        String key =stringTuple2Tuple2._1;
+                        Float avg =stringTuple2Tuple2._2._1 / stringTuple2Tuple2._2._2;
 
-//        JavaRDD<String> finalop = avgcrimeRDD.map(
-//                new Function<Tuple2<String, Float>, String>() {
-//
-//                    @Override
-//                    public String call(Tuple2<String, Float> stringFloatTuple2) throws Exception {
-//
-//                        String s = stringFloatTuple2._1 + ","+Float.toString(stringFloatTuple2._2);
-//                        return s;
-//                    }
-//                }
-//        );
+                        return new Tuple2(key,avg);
+                    }
+                }
+        );
 
-//        finalop.saveAsTextFile("sand_output");
+        JavaPairRDD<String,Float> sanDiegoAvgCrimePairRDD = sanDiegoAvgCrimeRDD.mapToPair(
+                new PairFunction<Tuple2<String, Float>, String, Float>() {
+                    @Override
+                    public Tuple2<String, Float> call(Tuple2<String, Float> stringFloatTuple2) throws Exception {
+                        return stringFloatTuple2;
+                    }
+                }
+        );
 
+        JavaPairRDD<String, Float> sanDiegoSortedCrimeRDD = sanDiegoAvgCrimePairRDD.sortByKey();
 
+        JavaRDD<String> sanDiegoFinalOpRDD = sanDiegoSortedCrimeRDD.map(
+                new Function<Tuple2<String, Float>, String>() {
+
+                    @Override
+                    public String call(Tuple2<String, Float> stringFloatTuple2) throws Exception {
+
+                        String s = stringFloatTuple2._1 + ","+Float.toString(stringFloatTuple2._2);
+                        return s;
+                    }
+                }
+        );
+
+        sanDiegoFinalOpRDD.saveAsTextFile("SanDiego_output");
 
 
-
-//        JavaPairRDD<String,String> crimePairRDD = crimeDataRDD.mapToPair(
-//                new PairFunction<String, String, String>() {
-//                    @Override
-//                    public Tuple2<String, String> call(String s) throws Exception {
-//                        String incident_id= s.split(",")[0];
-//
-//                        return new Tuple2(incident_id,s); //Key value Pair
-//                    }
-//                }
-//        ).repartition(10);
-//
-// JavaRDD<String> crimeDataRDD = sparkContext.textFile("CrimeData.csv");
-//
-//
-//        JavaRDD<String> offenceRDD = crimeDataRDD.filter(
-//                new Function<String, Boolean>() {
-//                    @Override
-//                    public Boolean call(String s) throws Exception {
-//                        String[] tokens = s.split(",");
-//                        int offenceID = new Integer(tokens[0]).intValue();
-//                        if (offenceID >= 201000000 && offenceID <= 201340100) return true;
-//                        else return false;
-//                    }
-//                }
-//        ).repartition(4);
-//
-//        crimePairRDD.saveAsTextFile("output");
-
-//        SparkConf conf = new SparkConf().setAppName("CrimeAnalysisDataset").setMaster("local");
-//        // create Spark Context
-//        SparkContext context = new SparkContext(conf);
-//        // create spark Session
-//        SparkSession sparkSession = new SparkSession(context);
-////     SparkSession sparkSession= SparkSession.builder().master("local").appName("CrimeData.csv").getOrCreate();
-//     String filePath=Crime.class.getResource("CrimeData.csv").getPath();
-//     Dataset< Row > dataset=sparkSession.sqlContext().read().format("com.databricks.spark.csv").option("header", true).option("inferSchema", true).load(filePath);
-//     dataset.show();
-//        System.out.println("========== Print Schema ============");
-//        dataset.printSchema();
-//        System.out.println("========== Print Data ==============");
-//        dataset.show();
-//        System.out.println("========== Print title ==============");
-//        dataset.select("title").show();
-
-        //Maryland
-        JavaRDD<String> MarylandRDD = sparkContext.textFile("CrimeData.csv");
-        JavaRDD<String> filterRDD = MarylandRDD.filter(
+        //Maryland crime data analysis
+        JavaRDD<String> marylandRDD = sparkContext.textFile("CrimeData.csv");
+        JavaRDD<String> filterRDD = marylandRDD.filter(
                 new Function<String, Boolean>() {
                     @Override
                     public Boolean call(String s) throws Exception {
                         String[] tokens = s.split(",");
+                        String[] date = tokens[3].split(" ");
+                        String[] y1= date[0].split("/");
+                        int year = new Integer(y1[2]).intValue();
 
-                        int year = new Integer(tokens[0]).intValue();
-                        if (year >=2017 && year <=2021) return true;
+                        if (year >=2020 && year <=2022){
+
+                            return true;
+                        }
+
                         else return false;
                     }
                 }
         );
+
+
+        JavaPairRDD<String, Integer> MdcitydataRDD = filterRDD.mapToPair(
+                new PairFunction<String, String, Integer>() {
+                    @Override
+                    public Tuple2<String, Integer> call(String s) throws Exception {
+                        String[] tokens = s.split(",");
+                        String city= tokens[9].trim();
+                        String[] date = tokens[3].split(" ");
+                        String[] y1= date[0].split("/");
+                        String year =y1[2];
+                        return new Tuple2(city, 1);
+
+                    }
+                }
+        ).repartition(1);
+
+
+        JavaPairRDD<String, Integer> reducedRDD =MdcitydataRDD.reduceByKey(
+                new Function2<Integer, Integer, Integer>() {
+                    @Override
+                    public Integer call(Integer num1, Integer num2) throws Exception {
+                        Integer count = num1 +num2;
+                        return count;
+                    }
+                }
+        );
+
+        JavaPairRDD<Integer, String> MDSwapRDD = reducedRDD.mapToPair(new PairFunction<Tuple2<String, Integer>, Integer, String>() {
+            @Override
+            public Tuple2<Integer, String> call(Tuple2<String, Integer> item) throws Exception {
+                return item.swap();
+            }
+
+        });
+        List<Tuple2<Integer , String>> sortedMarylandListRDD = MDSwapRDD.sortByKey(false).take(5);
+
+
+        JavaPairRDD<Integer, String> MDSortedPairRDD = sparkContext.parallelizePairs(sortedMarylandListRDD).repartition(1);
+        MDSortedPairRDD.saveAsTextFile("Maryland_output");
+
+
     }
 }
