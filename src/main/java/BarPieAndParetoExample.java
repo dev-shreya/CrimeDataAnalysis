@@ -1,11 +1,14 @@
 import tech.tablesaw.api.Table;
 import tech.tablesaw.plotly.Plot;
+import tech.tablesaw.plotly.api.HorizontalBarPlot;
 import tech.tablesaw.plotly.components.Figure;
 import tech.tablesaw.plotly.components.Layout;
 import tech.tablesaw.plotly.traces.BarTrace;
 import tech.tablesaw.plotly.traces.PieTrace;
 
 import java.io.*;
+
+;
 
 public class BarPieAndParetoExample {
 
@@ -22,22 +25,43 @@ public class BarPieAndParetoExample {
         PieTrace trace1 = PieTrace.builder(sanDiegoTable.categoricalColumn(0),sanDiegoTable.numberColumn(1)).build();
         Plot.show(new Figure(sdDataLayout, trace1));
 
-
+//-----------------------------------Bar plot for Maryland crime ------------------------------------------
 
         Layout MDDataLayout = Layout.builder().title("Top Five cities with highest crime in Maryland ").build();
         Table MDTable = Table.read().csv("Maryland_output/part-00000");
         BarTrace btraceMD = BarTrace.builder(MDTable.categoricalColumn(0), MDTable.numberColumn(1)).build();
         Plot.show(new Figure(MDDataLayout, btraceMD));
 
-        Layout DCDataLayout = Layout.builder().title("Crime at different times of the day in Washington DC ").build();
-        Table DCTable = Table.read().csv("DC_output/part-00000");
-        BarTrace btraceDC = BarTrace.builder(DCTable.categoricalColumn(0), DCTable.numberColumn(1)).build();
-        Plot.show(new Figure(DCDataLayout, btraceDC));
+//        Layout layoutMD = Layout.builder().title("Top Five cities with highest crime in Maryland ").build();
+//        Table MDTable= Table.read().csv("Maryland_output/part-00000");
+//        Plot.show(ScatterPlot.create("Top Five cities with highest crime in Maryland", MDTable, "City",
+//                "Occurrence"));
+//        Plot.show(Histogram.create("Top Five cities with highest crime in Maryland", MDTable, "City"));
+//        Plot.show(
+//                BubblePlot.create("Top Five cities with highest crime in Maryland\"",
+//                        MDTable,				// table
+//                        "City",  	// x
+//                        "Occurrence", 				// y
+//                        "Occurrence ")); 		// bubble size
+//        Plot.show(
+//                HorizontalBarPlot.create(
+//                        "Crime at different times of the day in Washington DC", MDTable, "City", "Occurrence"));
 
-        Table DCPieTable  = Table.read().csv("DC_output/part-00000");
-        Layout DCPieLayout = Layout.builder().title("Crime at different times of the day in Washington DC").build();
-        PieTrace tracePie = PieTrace.builder(DCPieTable.categoricalColumn(0),DCPieTable.numberColumn(1)).build();
-        Plot.show(new Figure(DCPieLayout, tracePie));
+//        Layout DCDataLayout = Layout.builder().title("Crime at different times of the day in Washington DC ").build();
+//        Table DCTable = Table.read().csv("DC_output/part-00000");
+//        BarTrace btraceDC = BarTrace.builder(DCTable.categoricalColumn(0), DCTable.numberColumn(1)).build();
+//        Plot.show(new Figure(DCDataLayout, btraceDC));
+
+//        Table DCPieTable  = Table.read().csv("DC_output/part-00000");
+//        Layout DCPieLayout = Layout.builder().title("Crime at different times of the day in Washington DC").build();
+//        PieTrace tracePie = PieTrace.builder(DCPieTable.categoricalColumn(0),DCPieTable.numberColumn(1)).build();
+//        Plot.show(new Figure(DCPieLayout, tracePie));
+
+//       ----------------------------Horizontal Bar Chart Graph for DC --------------------------------
+        Table DC_Table= Table.read().csv("DC_output/part-00000");
+        Plot.show(
+                HorizontalBarPlot.create(
+                        "Crime at different times of the day in Washington DC", DC_Table, "Time", "Occurrence"));
 
 
     }
