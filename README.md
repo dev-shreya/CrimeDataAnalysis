@@ -18,6 +18,9 @@ Apache Spark
 # Visualization tool
 Tablesaw
 
+
+<img src="https://github.com/dev-shreya/CrimeDataAnalysis/blob/main/w2.PNG" width="150"/>
+
 # Language used
 Java
        
@@ -30,3 +33,7 @@ Java
 # Dataset:
 We have collected dataset from various sources like:
 Kaggle,https://datasetsearch.research.google.com/search?src=0&query=Crime&docid=L2cvMTFxcDJyZjV2bg%3D%3D,data.world etc
+
+
+
+
