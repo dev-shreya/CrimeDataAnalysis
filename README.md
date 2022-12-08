@@ -26,8 +26,11 @@ Java
        
 # Types of Analysis that are performed
 1  Annual average crime rate in San Diego
+
 2  Top 5 crimes in Los Angeles
+
 3  Top 5 cities in Maryland with highest crime rate
+
 4  Maximum crime occurences at different time of the day(Morning, Evening, Midnight)
 
 # Dataset:
