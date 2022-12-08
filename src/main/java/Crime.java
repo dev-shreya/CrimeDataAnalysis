@@ -174,9 +174,9 @@ public class Crime implements Serializable {
         JavaRDD<String> MarylandFinalRDD = MDSwappedPairRDD.map(
                 new Function<Tuple2<String, Integer>, String>() {
                     @Override
-                    public String call(Tuple2<String, Integer> stringIntegerTuple2) throws Exception {
-                        String s = stringIntegerTuple2._1 + "," +stringIntegerTuple2._2;
-                        return s;
+                    public String call(Tuple2<String, Integer> stringIntTuple2) throws Exception {
+                        String str = stringIntTuple2._1 + "," +stringIntTuple2._2;
+                        return str;
                     }
                 }
         );
@@ -235,12 +235,12 @@ public class Crime implements Serializable {
 
         });
 //        ---------------------------sorting the data and displaying top 5------------------------
-        List<Tuple2<Integer , String>> sortedDCListRDD = DCSwapRDD.sortByKey(false).take(5);
+        List<Tuple2<Integer , String>> SortedDCListRDD = DCSwapRDD.sortByKey(false).take(5);
 
 //-----------------------------Creating parallelized collection-----------------------------------
-        JavaPairRDD<Integer, String> DCSortedPairRDD = sparkContext.parallelizePairs(sortedDCListRDD).repartition(1);
+        JavaPairRDD<Integer, String> SortedPairDCRDD = sparkContext.parallelizePairs(SortedDCListRDD).repartition(1);
 
-        JavaPairRDD<String, Integer> DCSwappedPairRDD = DCSortedPairRDD.mapToPair(new PairFunction<Tuple2<Integer, String>, String, Integer>() {
+        JavaPairRDD<String, Integer> SwappedPairDCRDD = SortedPairDCRDD.mapToPair(new PairFunction<Tuple2<Integer, String>, String, Integer>() {
             @Override
             public Tuple2<String , Integer> call(Tuple2<Integer, String> item) throws Exception {
                 return item.swap();
@@ -248,17 +248,17 @@ public class Crime implements Serializable {
 
         });
 
-        JavaRDD<String> DCFinalRDD = DCSwappedPairRDD.map(
+        JavaRDD<String> DCFinalOutputRDD = SwappedPairDCRDD.map(
                 new Function<Tuple2<String, Integer>, String>() {
                     @Override
-                    public String call(Tuple2<String, Integer> stringIntegerTuple2) throws Exception {
-                        String s = stringIntegerTuple2._1 + "," +stringIntegerTuple2._2;
-                        return s;
+                    public String call(Tuple2<String, Integer> StrIntTuple) throws Exception {
+                        String str = StrIntTuple._1 + "," +StrIntTuple._2;
+                        return str;
                     }
                 }
         );
 //        ----------------------Saving the data in output file-----------------------------
-        DCSwappedPairRDD.saveAsTextFile("DC_output");
+        DCFinalOutputRDD.saveAsTextFile("DC_output");
 
         //        ------------- End of DC Data Analysis-------------------------------
     }
