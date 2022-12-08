@@ -8,8 +8,12 @@ import scala.Tuple2;
 import org.apache.spark.api.java.function.Function2;
 import java.io.Serializable;
 import java.util.List;
+
+
 public class Crime implements Serializable {
     public static void main(String args[]){
+
+//       --------------Setting up master--------------------------------------
         SparkConf sparkConf = new SparkConf()
                 .setAppName("Crime Data analysis")
                 .setMaster("local[*]");  // Delete this line when submitting to a cluster
@@ -98,6 +102,7 @@ public class Crime implements Serializable {
 
         //Maryland crime data analysis
         JavaRDD<String> marylandRDD = sparkContext.textFile("CrimeData.csv");
+//       --------------------------- filtering the data on basis of year----------------------------------
         JavaRDD<String> filterRDD = marylandRDD.filter(
                 new Function<String, Boolean>() {
                     @Override
@@ -117,7 +122,7 @@ public class Crime implements Serializable {
                 }
         );
 
-
+//     --------------------Pairing word with count-------------------------------------------
         JavaPairRDD<String, Integer> MdcitydataRDD = filterRDD.mapToPair(
                 new PairFunction<String, String, Integer>() {
                     @Override
@@ -133,7 +138,7 @@ public class Crime implements Serializable {
                 }
         ).repartition(1);
 
-
+//        --------------------------adds pairs of same word with count--------------
         JavaPairRDD<String, Integer> reducedRDD =MdcitydataRDD.reduceByKey(
                 new Function2<Integer, Integer, Integer>() {
                     @Override
@@ -151,9 +156,11 @@ public class Crime implements Serializable {
             }
 
         });
+        //        ---------------------------sorting the data and displaying top 5------------------------
         List<Tuple2<Integer , String>> sortedMarylandListRDD = MarylandSwapRDD.sortByKey(false).take(5);
 
 
+//-----------------------------Creating parallelized collection-----------------------------------
         JavaPairRDD<Integer, String> MDSortedPairRDD = sparkContext.parallelizePairs(sortedMarylandListRDD).repartition(1);
 
         JavaPairRDD<String, Integer> MDSwappedPairRDD = MDSortedPairRDD.mapToPair(new PairFunction<Tuple2<Integer, String>, String, Integer>() {
@@ -174,10 +181,85 @@ public class Crime implements Serializable {
                 }
         );
 
-
+//        ----------------------Saving the data in output file-----------------------------
 
         MarylandFinalRDD.saveAsTextFile("Maryland_output");
 
 
+//        ------------------------- End of MaryLand Data Analysis-------------------------------
+
+        //DC crime data analysis
+        JavaRDD<String> DCRDD = sparkContext.textFile("DC_crime.csv");
+        JavaRDD<String> fRDD = DCRDD.filter(
+                new Function<String, Boolean>() {
+                    @Override
+                    public Boolean call(String s) throws Exception {
+                        String[] tokens = s.split(",");
+                        String[] date = tokens[4].split("-");
+                        String year = date[0];
+//                        if (year==2016) {
+                            return true;
+//                        } else return false;
+                    }
+//                        return true;
+              }
+        );
+//     --------------------Pairing word with count-------------------------------------------
+        JavaPairRDD<String, Integer> DCdataRDD = fRDD.mapToPair(
+                new PairFunction<String, String, Integer>() {
+                    @Override
+                    public Tuple2<String, Integer> call(String s) throws Exception {
+                        String[] tokens = s.split(",");
+                   String timeOfDay = tokens[5];
+                        return new Tuple2(timeOfDay, 1);
+
+                    }
+                }
+        ).repartition(1);
+
+//        --------------------------adds pairs of same word with count--------------
+                JavaPairRDD<String, Integer> reduceRDD =DCdataRDD.reduceByKey(
+                new Function2<Integer, Integer, Integer>() {
+                    @Override
+                    public Integer call(Integer val1, Integer val2) throws Exception {
+                        Integer count = val1 +val2;
+                        return count;
+                    }
+                }
+        );
+        JavaPairRDD<Integer, String> DCSwapRDD = reduceRDD.mapToPair(new PairFunction<Tuple2<String, Integer>, Integer, String>() {
+            @Override
+            public Tuple2<Integer, String> call(Tuple2<String, Integer> item) throws Exception {
+                return item.swap();
+            }
+
+        });
+//        ---------------------------sorting the data and displaying top 5------------------------
+        List<Tuple2<Integer , String>> sortedDCListRDD = DCSwapRDD.sortByKey(false).take(5);
+
+//-----------------------------Creating parallelized collection-----------------------------------
+        JavaPairRDD<Integer, String> DCSortedPairRDD = sparkContext.parallelizePairs(sortedDCListRDD).repartition(1);
+
+        JavaPairRDD<String, Integer> DCSwappedPairRDD = DCSortedPairRDD.mapToPair(new PairFunction<Tuple2<Integer, String>, String, Integer>() {
+            @Override
+            public Tuple2<String , Integer> call(Tuple2<Integer, String> item) throws Exception {
+                return item.swap();
+            }
+
+        });
+
+        JavaRDD<String> DCFinalRDD = DCSwappedPairRDD.map(
+                new Function<Tuple2<String, Integer>, String>() {
+                    @Override
+                    public String call(Tuple2<String, Integer> stringIntegerTuple2) throws Exception {
+                        String s = stringIntegerTuple2._1 + "," +stringIntegerTuple2._2;
+                        return s;
+                    }
+                }
+        );
+//        ----------------------Saving the data in output file-----------------------------
+        DCSwappedPairRDD.saveAsTextFile("DC_output");
+
+        //        ------------- End of DC Data Analysis-------------------------------
     }
 }
