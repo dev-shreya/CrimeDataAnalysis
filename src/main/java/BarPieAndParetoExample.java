@@ -19,6 +19,18 @@ public class BarPieAndParetoExample {
         BarTrace btrace = BarTrace.builder(testTable.categoricalColumn(0), testTable.numberColumn(1)).build();
         Plot.show(new Figure(layout1, btrace));
 
+        Layout marylandDataLayout = Layout.builder().title("Top Five cities in Maryland with highest crime rate ").build();
+        Table MDTable = Table.read().csv("Maryland_output/part-00000");
+        BarTrace btraceMD = BarTrace.builder(MDTable.categoricalColumn(0), MDTable.numberColumn(1)).build();
+        Plot.show(new Figure(marylandDataLayout, btraceMD));
+
+        Layout DCDataLayout = Layout.builder().title("Highest crime occurrences at different time of the day").build();
+        Table DCTable = Table.read().csv("DC_output/part-00000");
+        BarTrace btraceDC = BarTrace.builder(DCTable.categoricalColumn(0), DCTable.numberColumn(1)).build();
+        Plot.show(new Figure(DCDataLayout, btraceDC));
+
+     
 
     }
+
 }
