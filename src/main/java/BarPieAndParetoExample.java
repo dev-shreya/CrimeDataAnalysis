@@ -5,32 +5,59 @@ import tech.tablesaw.plotly.components.Layout;
 import tech.tablesaw.plotly.traces.BarTrace;
 import tech.tablesaw.plotly.traces.PieTrace;
 
+import java.io.*;
+
 public class BarPieAndParetoExample {
 
     public static void main(String[] args) throws Exception {
 
+        BarPieAndParetoExample brObject = new BarPieAndParetoExample();
+        brObject.addHeaderToFile("SanDiego_output/part-00000", "Year,CrimeRate");
+        brObject.addHeaderToFile("Maryland_output/part-00000","City,Occurrence");
+        brObject.addHeaderToFile("DC_output/part-00000","Time,Occurrence");
 
-        Table testTable = Table.read().csv("SANDAG_Crime_Data2.csv");
 
-        Layout layout1 = Layout.builder().title("Annual average crime rate in San Diego ").build();
-        PieTrace trace1 = PieTrace.builder(testTable.categoricalColumn(0), testTable.numberColumn(1)).build();
-        Plot.show(new Figure(layout1, trace1));
+        Table sanDiegoTable  = Table.read().csv("SanDiego_output/part-00000");
+        Layout sdDataLayout = Layout.builder().title("Annual average crime rate in San Diego ").build();
+        PieTrace trace1 = PieTrace.builder(sanDiegoTable.categoricalColumn(0),sanDiegoTable.numberColumn(1)).build();
+        Plot.show(new Figure(sdDataLayout, trace1));
 
-        BarTrace btrace = BarTrace.builder(testTable.categoricalColumn(0), testTable.numberColumn(1)).build();
-        Plot.show(new Figure(layout1, btrace));
 
-        Layout marylandDataLayout = Layout.builder().title("Top Five cities in Maryland with highest crime rate ").build();
+
+        Layout MDDataLayout = Layout.builder().title("Top Five cities with highest crime in Maryland ").build();
         Table MDTable = Table.read().csv("Maryland_output/part-00000");
         BarTrace btraceMD = BarTrace.builder(MDTable.categoricalColumn(0), MDTable.numberColumn(1)).build();
-        Plot.show(new Figure(marylandDataLayout, btraceMD));
+        Plot.show(new Figure(MDDataLayout, btraceMD));
 
-        Layout DCDataLayout = Layout.builder().title("Highest crime occurrences at different time of the day").build();
+        Layout DCDataLayout = Layout.builder().title("Crime at different times of the day in Washington DC ").build();
         Table DCTable = Table.read().csv("DC_output/part-00000");
         BarTrace btraceDC = BarTrace.builder(DCTable.categoricalColumn(0), DCTable.numberColumn(1)).build();
         Plot.show(new Figure(DCDataLayout, btraceDC));
 
-     
+        Table DCPieTable  = Table.read().csv("DC_output/part-00000");
+        Layout DCPieLayout = Layout.builder().title("Crime at different times of the day in Washington DC").build();
+        PieTrace tracePie = PieTrace.builder(DCPieTable.categoricalColumn(0),DCPieTable.numberColumn(1)).build();
+        Plot.show(new Figure(DCPieLayout, tracePie));
+
 
     }
 
+    public void addHeaderToFile(String filePath, String fileHeader) throws IOException {
+        File fileObject = new File(filePath);
+        FileInputStream fis = new FileInputStream(fileObject);
+        BufferedReader br = new BufferedReader((new InputStreamReader(fis)));
+        String result = "";
+        String line = "";
+        while( (line = br.readLine()) != null){
+            if(!line.contains(fileHeader))
+                result = result + line + '\n';
+        }
+
+        result = fileHeader + "\n" + result;
+
+        fileObject.delete();
+        FileOutputStream fos = new FileOutputStream(fileObject);
+        fos.write(result.getBytes());
+        fos.flush();
+    }
 }
