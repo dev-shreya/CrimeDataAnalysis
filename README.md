@@ -19,7 +19,7 @@ Apache Spark
 Tablesaw
 
 
-<img src="https://github.com/dev-shreya/CrimeDataAnalysis/blob/main/w2.PNG" width="150"/>
+<img src="https://github.com/dev-shreya/CrimeDataAnalysis/blob/main/w2.PNG" width="300"/>
 
 # Language used
 Java
