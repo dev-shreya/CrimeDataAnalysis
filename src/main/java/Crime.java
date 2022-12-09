@@ -211,6 +211,170 @@ public class Crime implements Serializable {
 
         /*-----------------------End of LA Data Analysis----------------------*/
 
+        //Maryland crime data analysis
+        JavaRDD<String> marylandRDD = sparkContext.textFile("CrimeData.csv");
+//       --------------------------- filtering the data on basis of year----------------------------------
+        JavaRDD<String> filterRDD = marylandRDD.filter(
+                new Function<String, Boolean>() {
+                    @Override
+                    public Boolean call(String s) throws Exception {
+                        String[] tokens = s.split(",");
+                        String[] date = tokens[3].split(" ");
+                        String[] y1= date[0].split("/");
+                        int year = new Integer(y1[2]).intValue();
+
+                        if (year >=2020 && year <=2022){
+
+                            return true;
+                        }
+
+                        else return false;
+                    }
+                }
+        );
+
+//     --------------------Pairing word with count-------------------------------------------
+        JavaPairRDD<String, Integer> MdcitydataRDD = filterRDD.mapToPair(
+                new PairFunction<String, String, Integer>() {
+                    @Override
+                    public Tuple2<String, Integer> call(String s) throws Exception {
+                        String[] tokens = s.split(",");
+                        String city= tokens[9].trim();
+                        String[] date = tokens[3].split(" ");
+                        String[] y1= date[0].split("/");
+                        String year =y1[2];
+                        return new Tuple2(city, 1);
+
+                    }
+                }
+        ).repartition(1);
+
+//        --------------------------adds pairs of same word with count--------------
+        JavaPairRDD<String, Integer> reducedRDD =MdcitydataRDD.reduceByKey(
+                new Function2<Integer, Integer, Integer>() {
+                    @Override
+                    public Integer call(Integer num1, Integer num2) throws Exception {
+                        Integer count = num1 +num2;
+                        return count;
+                    }
+                }
+        );
+
+        JavaPairRDD<Integer, String> MarylandSwapRDD = reducedRDD.mapToPair(new PairFunction<Tuple2<String, Integer>, Integer, String>() {
+            @Override
+            public Tuple2<Integer, String> call(Tuple2<String, Integer> item) throws Exception {
+                return item.swap();
+            }
+
+        });
+        //        ---------------------------sorting the data and displaying top 5------------------------
+        List<Tuple2<Integer , String>> sortedMarylandListRDD = MarylandSwapRDD.sortByKey(false).take(5);
+
+
+//-----------------------------Creating parallelized collection-----------------------------------
+        JavaPairRDD<Integer, String> MDSortedPairRDD = sparkContext.parallelizePairs(sortedMarylandListRDD).repartition(1);
+
+        JavaPairRDD<String, Integer> MDSwappedPairRDD = MDSortedPairRDD.mapToPair(new PairFunction<Tuple2<Integer, String>, String, Integer>() {
+            @Override
+            public Tuple2<String , Integer> call(Tuple2<Integer, String> item) throws Exception {
+                return item.swap();
+            }
+
+        });
+
+        JavaRDD<String> MarylandFinalRDD = MDSwappedPairRDD.map(
+                new Function<Tuple2<String, Integer>, String>() {
+                    @Override
+                    public String call(Tuple2<String, Integer> stringIntTuple2) throws Exception {
+                        String str = stringIntTuple2._1 + "," +stringIntTuple2._2;
+                        return str;
+                    }
+                }
+        );
+
+//        ----------------------Saving the data in output file-----------------------------
+
+        MarylandFinalRDD.saveAsTextFile("Maryland_output");
+
+
+//        ------------------------- End of MaryLand Data Analysis-------------------------------
+
+        //DC crime data analysis
+        JavaRDD<String> DCRDD = sparkContext.textFile("DC_crime.csv");
+        JavaRDD<String> fRDD = DCRDD.filter(
+                new Function<String, Boolean>() {
+                    @Override
+                    public Boolean call(String s) throws Exception {
+                        String[] tokens = s.split(",");
+                        String[] date = tokens[4].split("-");
+                        String year = date[0];
+//                        if (year==2016) {
+                        return true;
+//                        } else return false;
+                    }
+//                        return true;
+                }
+        );
+//     --------------------Pairing word with count-------------------------------------------
+        JavaPairRDD<String, Integer> DCdataRDD = fRDD.mapToPair(
+                new PairFunction<String, String, Integer>() {
+                    @Override
+                    public Tuple2<String, Integer> call(String s) throws Exception {
+                        String[] tokens = s.split(",");
+                        String timeOfDay = tokens[5];
+                        return new Tuple2(timeOfDay, 1);
+
+                    }
+                }
+        ).repartition(1);
+
+//        --------------------------adds pairs of same word with count--------------
+        JavaPairRDD<String, Integer> reduceRDD =DCdataRDD.reduceByKey(
+                new Function2<Integer, Integer, Integer>() {
+                    @Override
+                    public Integer call(Integer val1, Integer val2) throws Exception {
+                        Integer count = val1 +val2;
+                        return count;
+                    }
+                }
+        );
+        JavaPairRDD<Integer, String> DCSwapRDD = reduceRDD.mapToPair(new PairFunction<Tuple2<String, Integer>, Integer, String>() {
+            @Override
+            public Tuple2<Integer, String> call(Tuple2<String, Integer> item) throws Exception {
+                return item.swap();
+            }
+
+        });
+//        ---------------------------sorting the data and displaying top 5------------------------
+        List<Tuple2<Integer , String>> SortedDCListRDD = DCSwapRDD.sortByKey(false).take(5);
+
+//-----------------------------Creating parallelized collection-----------------------------------
+        JavaPairRDD<Integer, String> SortedPairDCRDD = sparkContext.parallelizePairs(SortedDCListRDD).repartition(1);
+
+        JavaPairRDD<String, Integer> SwappedPairDCRDD = SortedPairDCRDD.mapToPair(new PairFunction<Tuple2<Integer, String>, String, Integer>() {
+            @Override
+            public Tuple2<String , Integer> call(Tuple2<Integer, String> item) throws Exception {
+                return item.swap();
+            }
+
+        });
+
+        JavaRDD<String> DCFinalOutputRDD = SwappedPairDCRDD.map(
+                new Function<Tuple2<String, Integer>, String>() {
+                    @Override
+                    public String call(Tuple2<String, Integer> StrIntTuple) throws Exception {
+                        String str = StrIntTuple._1 + "," +StrIntTuple._2;
+                        return str;
+                    }
+                }
+        );
+//        ----------------------Saving the data in output file-----------------------------
+        DCFinalOutputRDD.saveAsTextFile("DC_output");
+
+        //        ------------- End of DC Data Analysis-------------------------------
+
+
+
     }
 
     public static boolean isNumeric(String str) {
