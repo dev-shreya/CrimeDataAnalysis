@@ -26,7 +26,7 @@ public class VisualRepresentation {
         Plot.show(new Figure(sdDataLayout, trace1));
 
         //-----------------------------------Bar Graph for LA crime data------------------------------------------
-        Layout laDataLayout = Layout.builder().title("Top Five Crime  in LA ").build();
+        Layout laDataLayout = Layout.builder().title("Top five Crime in Los Angeles city ").build();
         Table laTable = Table.read().csv("LA_output/part-00000");
         BarTrace btrace = BarTrace.builder(laTable.categoricalColumn(0), laTable.numberColumn(1)).build();
         Plot.show(new Figure(laDataLayout, btrace));
@@ -43,9 +43,6 @@ public class VisualRepresentation {
         Plot.show(
                 HorizontalBarPlot.create(
                         "Crime at different times of the day in Washington DC", DC_Table, "Time", "Occurrence"));
-
-
-
 
 
     }

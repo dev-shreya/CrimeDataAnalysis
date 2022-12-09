@@ -18,7 +18,13 @@ public class Crime implements Serializable {
         JavaSparkContext sparkContext = new JavaSparkContext(sparkConf);
 
         /*-----------------------Start of Sand Diego Data Analysis----------------------*/
-        JavaRDD<String> sanDiegoRDD = sparkContext.textFile("SANDAG_Crime_Data1.csv");
+        // Use below file path in case files are placed at hdfs and use respective port mentioned in core-site.xml
+        JavaRDD<String> sanDiegoRDD = sparkContext.textFile("hdfs://localhost:9820/CrimeDataset/SandDiego_Crime_Data.csv");
+
+        // uncomment and use below line in case you directly want to access file from input folder
+        //        JavaRDD<String> sanDiegoRDD = sparkContext.textFile("input/SANDAG_Crime_Data1.csv");
+
+
         JavaRDD<String> filteredSDRDD = sanDiegoRDD.filter(
                 new Function<String, Boolean>() {
                     @Override
@@ -99,7 +105,15 @@ public class Crime implements Serializable {
 
 
      /*----------------------Start of  LA Data Analysis----------------------*/
-        JavaRDD<String> laDataRDD = sparkContext.textFile("LosAngeles_Crime_Data.csv");
+
+
+        // Use below file path in case files are placed at hdfs and use respective port mentioned in core-site.xml
+        JavaRDD<String> laDataRDD = sparkContext.textFile("hdfs://localhost:9820/CrimeDataset/LosAngeles_Crime_Data.csv");
+
+        // uncomment and use below line in case you directly want to access file from input folder
+//        JavaRDD<String> laDataRDD = sparkContext.textFile("input/LosAngeles_Crime_Data.csv");
+
+        /*----Filtering LA crime data between year 2017 and 2022 */
 
         JavaRDD<String> filteredLARDD = laDataRDD.filter(
                 new Function<String, Boolean>() {
@@ -120,7 +134,7 @@ public class Crime implements Serializable {
                 }
         );
 
-
+/*------------------mapping similar type of crime to one category---*/
         JavaRDD<String> laCrimeTypeRDD = filteredLARDD.map(
                 new Function<String, String>() {
                     @Override
@@ -151,7 +165,7 @@ public class Crime implements Serializable {
                 }
         ).repartition(1);
 
-
+/*----------------Creating key value pair-------------------------------------*/
         JavaPairRDD<String, Integer> laCrimeDataKeyValueRDD = laCrimeTypeRDD.mapToPair(
                 new PairFunction<String, String, Integer>() {
                     @Override
@@ -163,6 +177,7 @@ public class Crime implements Serializable {
                     }
                 }
         );
+
 
         JavaPairRDD<String, Integer> laReducedKeyRDD =laCrimeDataKeyValueRDD.reduceByKey(
                 new Function2<Integer, Integer, Integer>() {
@@ -212,8 +227,14 @@ public class Crime implements Serializable {
         /*-----------------------End of LA Data Analysis----------------------*/
 
         //Maryland crime data analysis
-        JavaRDD<String> marylandRDD = sparkContext.textFile("CrimeData.csv");
-//       --------------------------- filtering the data on basis of year----------------------------------
+
+        // Use below file path in case files are placed at hdfs and use respective port mentioned in core-site.xml
+        JavaRDD<String> marylandRDD = sparkContext.textFile("hdfs://localhost:9820/CrimeDataset/Maryland_Crime_Data.csv");
+
+        // uncomment and use below line in case you directly want to access file from input folder
+//        JavaRDD<String> marylandRDD = sparkContext.textFile("input/Maryland_Crime_Data.csv");
+
+        //       --------------------------- filtering the data on basis of year----------------------------------
         JavaRDD<String> filterRDD = marylandRDD.filter(
                 new Function<String, Boolean>() {
                     @Override
@@ -300,8 +321,14 @@ public class Crime implements Serializable {
 //        ------------------------- End of MaryLand Data Analysis-------------------------------
 
         //DC crime data analysis
-        JavaRDD<String> DCRDD = sparkContext.textFile("DC_crime.csv");
-        JavaRDD<String> fRDD = DCRDD.filter(
+
+        // Use below file path in case files are placed at hdfs and use respective port mentioned in core-site.xml
+        JavaRDD<String> DCRDD = sparkContext.textFile("hdfs://localhost:9820/CrimeDataset/DC_Crime_Data.csv");
+
+// uncomment and use below line in case you directly want to access file from input folder
+//        JavaRDD<String> DCRDD = sparkContext.textFile("input/DC_Crime_Data.csv");
+//
+            JavaRDD<String> fRDD = DCRDD.filter(
                 new Function<String, Boolean>() {
                     @Override
                     public Boolean call(String s) throws Exception {
